@@ -254,4 +254,11 @@ def callback_main(call):
 # def default_command(message):
 #     bot.reply_to(message, '❌ Нет такой команды!', reply_markup=keyboard_Menu)
 
-bot.polling(none_stop=True)
+while True:
+    try:
+        bot.polling(none_stop=True)
+
+    except Exception as e:
+        logger.error(e)  # или просто print(e) если у вас логгера нет,
+        # или import traceback; traceback.print_exc() для печати полной инфы
+        time.sleep(5)
