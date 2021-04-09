@@ -3,7 +3,7 @@ import datetime
 import logging
 import re
 import time
-
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import telebot
 from telebot import types
 from db_worker import *
@@ -12,7 +12,8 @@ bot = telebot.TeleBot("1726661536:AAHd5qaDSFLudBdOxoK-Ui_7AUEigFoYoUI")
 logging.basicConfig(filename="errors.log", level=logging.INFO)
 today = datetime.date.today()
 logging.info("Start HappyBot | " + str(today))
-
+PORT = int(os.environ.get('PORT', 80))
+TOKEN = '1769553533:AAG6EI51jUJHwAVvYa12iXER7jRniQF_nNM'
 helloMessage = '''
 Здравствуй {0.first_name}!, рады приветствовать Вас
 на сервисе обратной связи
@@ -254,11 +255,39 @@ def callback_main(call):
 # def default_command(message):
 #     bot.reply_to(message, '❌ Нет такой команды!', reply_markup=keyboard_Menu)
 
-while True:
-    try:
-        bot.polling(none_stop=True)
+def main():
+    """Start the bot."""
+    # Create the Updater and pass it your bot's token.
+    # Make sure to set use_context=True to use the new context based callbacks
+    # Post version 12 this will no longer be necessary
+    updater = Updater(TOKEN, use_context=True)
 
-    except Exception as e:
-        logger.error(e)  # или просто print(e) если у вас логгера нет,
-        # или import traceback; traceback.print_exc() для печати полной инфы
-        time.sleep(5)
+    # Get the dispatcher to register handlers
+    dp = updater.dispatcher
+
+    # on different commands - answer in Telegram
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("math", math))
+    dp.add_handler(CommandHandler("timenow", timenow))
+
+
+    # on noncommand i.e message - echo the message on Telegram
+    dp.add_handler(MessageHandler(Filters.text, echo))
+
+    # log all errors
+    dp.add_error_handler(error)
+
+    # Start the Bot
+    updater.start_webhook(listen="0.0.0.0",
+                          port=int(PORT),
+                          url_path=TOKEN)
+    updater.bot.setWebhook('https://happyindexbot.herokuapp.com/' + TOKEN)
+
+    # Run the bot until you press Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT. This should be used most of the time, since
+    # start_polling() is non-blocking and will stop the bot gracefully.
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
